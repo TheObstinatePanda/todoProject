@@ -13,7 +13,6 @@ const App = () => {
     const fetchTodos = async () => {
       try {
         const todos = await getTodos();
-        console.log('Fetched todos:', todos); // Log the fetched todos
         if (!Array.isArray(todos)) {
           throw new Error('Fetched data is not an array');
         } 
@@ -37,15 +36,16 @@ const handleSubmit = async (e) => {
   setError(null);
   const data = {
     description: todo.description,
-    };
-  //const data = todo.description.trim();
-  if (!data) {
+  };
+
+  if (data === '') {
     setError('Description is required');
     return;
   }
 
   try {
     const newTodo = await createTodo(data);
+    console.log('This is the new todo: ', newTodo);
     if (newTodo.error) {
       setError(newTodo.error)
       throw new Error(newTodo.error);
@@ -61,10 +61,11 @@ const handleSubmit = async (e) => {
 
 // handleDelete() function to remove to-do list with matching id
 const handleDelete = async (id) => {
+  console.log('deleting')
   try {
     await removeTodo(id);
     setTodoList(todoList.filter(todo => todo.todo_id !== id));
-    // fetchTodos();
+    console.log('removing todo # ', id)
   } catch (err) {
     setError(err);
   }
@@ -86,9 +87,7 @@ const handleDelete = async (id) => {
       {error && <p style={{ color: 'red' }}>{error}</p>}
 
       <ol>
-        {/* {console.log(todoList)} */}
-        {todoList.forEach((todoItem) => {
-          console.log('Mapping todoItem:', todoItem); // Log each todoItem
+        {todoList.map((todoItem) => {
           if (!todoItem || !todoItem.description) {
             console.error('Invalid todoItem:', todoItem);
             return null; // Skip rendering if todoItem is invalid

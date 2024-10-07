@@ -2,37 +2,35 @@
 const formidable = require('formidable');
 const { create, read, remove } = require('../model/todo');
 
-exports.create = (req, res) => {
+exports.create = async (req, res) => {
     // init the forms
-    const form = new formidable.IncomingForm();
-    form.keepExtensions = true;
-    form.parse(req, async (err, fields) => {
-        const { description } = fields;
-        //if description does not exist, send an error
-        if (!description) {
-            return res.status(400).json({
-                error: 'Description is Required',
-            });
-        } 
-        // else add to database with create()
-        try {
-            const newTask = await create(description);
-            return res.status(201).send({ data: newTask})
-        } catch (err) {
-            //log the error for debugging
-            console.error('Error adding task to database:', err);
-            // if description cannot be added, send an error
-            return res.status(500).json({
-                error: 'Internal Server Error',
-            });
-        }
-    });
+    console.log('trying to create')
+    const { description } = req.body;
+    console.log(description);
+
+    if (!description) {
+        console.error("Description is required")
+        return res.status(400).json({
+            error: 'Missing description'
+        });
+    }
+
+    try {
+        const newTask = await create(description);
+        console.log('task created: ', newTask);
+        return res.status(201).send({ data: newTask });
+    } catch (err) {
+        console.error('Errror adding task to database: ', err);
+        return res.status(500).json({
+            error: 'Internal server error',
+        });
+    }
 };
 
 exports.read = async (req, res) => {
     try {
         const task = await read();
-        return res.status(200).json({ data: task.rows });
+        return res.status(200).json(task);
     } catch (err) {
         return res.status(400).json({
             error: err,
@@ -40,13 +38,19 @@ exports.read = async (req, res) => {
     }
 };
 
-exports.removeTodo = async (req, res) => {
+exports.remove = async (req, res) => {
+    console.log('from index.js ', req.params);
     try {
-        await remove(req);
-        return res.status(200).send({ data: id });
+        const { id } = req.params;
+        console.log('Todo ID: ', id);
+        if (!id) {
+            return res.status(400).json({ error: 'Todo id required'})
+        }
+        const deletedTodo = await remove(id);
+        console.log(deletedTodo);
+        return res.status(200).send({ message: 'Todo successfully deleted', data: deletedTodo });
     } catch (err) {
-        return res.status(400).json({
-            error: err
-        });
+        console.error('Error deleting todo: ', err);
+        return res.status(400).json({ error: err.message });
     }
 };
